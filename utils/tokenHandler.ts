@@ -8,7 +8,7 @@ import {
 import { Cookies } from "https://deno.land/x/oak@v6.2.0/cookies.ts";
 import { config } from "https://deno.land/x/dotenv@v2.0.0/mod.ts";
 import { PayloadInfo } from "../types/types.ts";
-const { TOKEN_SECRET, TOKEN_NAME } = config()
+const { TOKEN_SECRET, TOKEN_NAME } = config();
 
 const header: Header = {
   alg: "HS512",
@@ -30,5 +30,7 @@ export const createToken = async (id: string, token_number: number) => {
 export const sendToken = (cookies: Cookies, token: string) =>
   cookies.set(TOKEN_NAME, token, { httpOnly: true });
 
+export const verifyToken = async (token: string) =>
+  await verify(token, TOKEN_SECRET, header.alg);
 
-export const verifyToken = async (token: string) => await verify(token, TOKEN_SECRET, header.alg)
+export const deleteToken = (cookies: Cookies) => cookies.delete(TOKEN_NAME);

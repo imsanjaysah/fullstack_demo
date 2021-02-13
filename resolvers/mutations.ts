@@ -1,10 +1,21 @@
 import * as bcrypt from "https://deno.land/x/bcrypt@v0.2.4/mod.ts";
+import { Context } from "https://deno.land/x/oak@v6.2.0/mod.ts";
 import { RouterContext } from "https://deno.land/x/oak@v6.2.0/router.ts";
 import { client } from "../db/db.ts";
-import { UserResponse, User, SignInArgs } from "../types/types.ts";
+import {
+  UserResponse,
+  User,
+  SignInArgs,
+  ResponseMessage,
+} from "../types/types.ts";
 import { SignupArgs } from "../types/types.ts";
-import { queryByEmailString, insertUserString } from "../utils/queryStrings.ts";
-import { createToken, sendToken } from "../utils/tokenHandler.ts";
+import { isAuthenticated } from "../utils/authUtils.ts";
+import {
+  queryByEmailString,
+  insertUserString,
+  updateTokenVersionString,
+} from "../utils/queryStrings.ts";
+import { createToken, deleteToken, sendToken } from "../utils/tokenHandler.ts";
 
 import {
   validateUsername,
@@ -134,5 +145,34 @@ export const Mutation = {
       throw error;
     }
   },
-};
 
+  signout: async (
+    _: any,
+    __: any,
+    { request, cookies }: Context
+  ): Promise<ResponseMessage | null> => {
+    try {
+      // Query user from database
+      const user = await isAuthenticated(request);
+      // Update the token_version by 1
+      user.token_version = user.token_version + 1;
+
+      await client.connect();
+
+      const updatedUserData = await client.query(
+        updateTokenVersionString(user.id, user.token_version)
+      );
+
+      const updatedUser = updatedUserData.rowsOfObjects()[0] as User;
+
+      if (!updatedUser) throw new Error("Sorry, can not proceed.");
+
+      // Delete jwt token on cookies in the browser
+      deleteToken(cookies);
+
+      return {message : 'Goodbye.'}
+    } catch (error) {
+      throw error;
+    }
+  },
+};

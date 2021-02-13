@@ -43,7 +43,12 @@ export type UserResponse = Pick<
 >;
 
 export type PayloadInfo = { id: string; token_number: number };
+
 export type DecodedToken = {
   payloadInfo: PayloadInfo;
   exp: number;
+};
+
+export type ResponseMessage = {
+  message: string;
 };
